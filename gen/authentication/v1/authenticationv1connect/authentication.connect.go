@@ -36,11 +36,15 @@ const (
 	// AuthenticationServiceLoginProcedure is the fully-qualified name of the AuthenticationService's
 	// Login RPC.
 	AuthenticationServiceLoginProcedure = "/authentication.v1.AuthenticationService/Login"
+	// AuthenticationServiceRegisterProcedure is the fully-qualified name of the AuthenticationService's
+	// Register RPC.
+	AuthenticationServiceRegisterProcedure = "/authentication.v1.AuthenticationService/Register"
 )
 
 // AuthenticationServiceClient is a client for the authentication.v1.AuthenticationService service.
 type AuthenticationServiceClient interface {
 	Login(context.Context, *connect_go.Request[v1.LoginRequest]) (*connect_go.Response[v1.LoginResponse], error)
+	Register(context.Context, *connect_go.Request[v1.RegisterRequest]) (*connect_go.Response[v1.RegisterResponse], error)
 }
 
 // NewAuthenticationServiceClient constructs a client for the
@@ -58,12 +62,18 @@ func NewAuthenticationServiceClient(httpClient connect_go.HTTPClient, baseURL st
 			baseURL+AuthenticationServiceLoginProcedure,
 			opts...,
 		),
+		register: connect_go.NewClient[v1.RegisterRequest, v1.RegisterResponse](
+			httpClient,
+			baseURL+AuthenticationServiceRegisterProcedure,
+			opts...,
+		),
 	}
 }
 
 // authenticationServiceClient implements AuthenticationServiceClient.
 type authenticationServiceClient struct {
-	login *connect_go.Client[v1.LoginRequest, v1.LoginResponse]
+	login    *connect_go.Client[v1.LoginRequest, v1.LoginResponse]
+	register *connect_go.Client[v1.RegisterRequest, v1.RegisterResponse]
 }
 
 // Login calls authentication.v1.AuthenticationService.Login.
@@ -71,10 +81,16 @@ func (c *authenticationServiceClient) Login(ctx context.Context, req *connect_go
 	return c.login.CallUnary(ctx, req)
 }
 
+// Register calls authentication.v1.AuthenticationService.Register.
+func (c *authenticationServiceClient) Register(ctx context.Context, req *connect_go.Request[v1.RegisterRequest]) (*connect_go.Response[v1.RegisterResponse], error) {
+	return c.register.CallUnary(ctx, req)
+}
+
 // AuthenticationServiceHandler is an implementation of the authentication.v1.AuthenticationService
 // service.
 type AuthenticationServiceHandler interface {
 	Login(context.Context, *connect_go.Request[v1.LoginRequest]) (*connect_go.Response[v1.LoginResponse], error)
+	Register(context.Context, *connect_go.Request[v1.RegisterRequest]) (*connect_go.Response[v1.RegisterResponse], error)
 }
 
 // NewAuthenticationServiceHandler builds an HTTP handler from the service implementation. It
@@ -89,6 +105,11 @@ func NewAuthenticationServiceHandler(svc AuthenticationServiceHandler, opts ...c
 		svc.Login,
 		opts...,
 	))
+	mux.Handle(AuthenticationServiceRegisterProcedure, connect_go.NewUnaryHandler(
+		AuthenticationServiceRegisterProcedure,
+		svc.Register,
+		opts...,
+	))
 	return "/authentication.v1.AuthenticationService/", mux
 }
 
@@ -97,4 +118,8 @@ type UnimplementedAuthenticationServiceHandler struct{}
 
 func (UnimplementedAuthenticationServiceHandler) Login(context.Context, *connect_go.Request[v1.LoginRequest]) (*connect_go.Response[v1.LoginResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("authentication.v1.AuthenticationService.Login is not implemented"))
+}
+
+func (UnimplementedAuthenticationServiceHandler) Register(context.Context, *connect_go.Request[v1.RegisterRequest]) (*connect_go.Response[v1.RegisterResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("authentication.v1.AuthenticationService.Register is not implemented"))
 }
