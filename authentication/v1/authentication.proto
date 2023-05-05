@@ -12,12 +12,12 @@ message LoginResponse {
 }
 
 message RegisterRequest {
-  string email=1;
-  string username=2;
-  string password=3;
+  string email = 1;
+  string username = 2;
+  string password = 3;
 }
 message RegisterResponse {
-  string jwt_token=1;
+  string jwt_token = 1;
 }
 
 service AuthenticationService {
