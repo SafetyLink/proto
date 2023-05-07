@@ -35,11 +35,14 @@ const (
 const (
 	// UserServiceGetUserByIDProcedure is the fully-qualified name of the UserService's GetUserByID RPC.
 	UserServiceGetUserByIDProcedure = "/authentication.v1.UserService/GetUserByID"
+	// UserServiceGetProfileProcedure is the fully-qualified name of the UserService's GetProfile RPC.
+	UserServiceGetProfileProcedure = "/authentication.v1.UserService/GetProfile"
 )
 
 // UserServiceClient is a client for the authentication.v1.UserService service.
 type UserServiceClient interface {
 	GetUserByID(context.Context, *connect_go.Request[v1.GetUserByIDRequest]) (*connect_go.Response[v1.GetUserByIDResponse], error)
+	GetProfile(context.Context, *connect_go.Request[v1.GetProfileRequest]) (*connect_go.Response[v1.GetProfileResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the authentication.v1.UserService service. By
@@ -57,12 +60,18 @@ func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+UserServiceGetUserByIDProcedure,
 			opts...,
 		),
+		getProfile: connect_go.NewClient[v1.GetProfileRequest, v1.GetProfileResponse](
+			httpClient,
+			baseURL+UserServiceGetProfileProcedure,
+			opts...,
+		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
 	getUserByID *connect_go.Client[v1.GetUserByIDRequest, v1.GetUserByIDResponse]
+	getProfile  *connect_go.Client[v1.GetProfileRequest, v1.GetProfileResponse]
 }
 
 // GetUserByID calls authentication.v1.UserService.GetUserByID.
@@ -70,9 +79,15 @@ func (c *userServiceClient) GetUserByID(ctx context.Context, req *connect_go.Req
 	return c.getUserByID.CallUnary(ctx, req)
 }
 
+// GetProfile calls authentication.v1.UserService.GetProfile.
+func (c *userServiceClient) GetProfile(ctx context.Context, req *connect_go.Request[v1.GetProfileRequest]) (*connect_go.Response[v1.GetProfileResponse], error) {
+	return c.getProfile.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the authentication.v1.UserService service.
 type UserServiceHandler interface {
 	GetUserByID(context.Context, *connect_go.Request[v1.GetUserByIDRequest]) (*connect_go.Response[v1.GetUserByIDResponse], error)
+	GetProfile(context.Context, *connect_go.Request[v1.GetProfileRequest]) (*connect_go.Response[v1.GetProfileResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -87,6 +102,11 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOpt
 		svc.GetUserByID,
 		opts...,
 	))
+	mux.Handle(UserServiceGetProfileProcedure, connect_go.NewUnaryHandler(
+		UserServiceGetProfileProcedure,
+		svc.GetProfile,
+		opts...,
+	))
 	return "/authentication.v1.UserService/", mux
 }
 
@@ -95,4 +115,8 @@ type UnimplementedUserServiceHandler struct{}
 
 func (UnimplementedUserServiceHandler) GetUserByID(context.Context, *connect_go.Request[v1.GetUserByIDRequest]) (*connect_go.Response[v1.GetUserByIDResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("authentication.v1.UserService.GetUserByID is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) GetProfile(context.Context, *connect_go.Request[v1.GetProfileRequest]) (*connect_go.Response[v1.GetProfileResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("authentication.v1.UserService.GetProfile is not implemented"))
 }
