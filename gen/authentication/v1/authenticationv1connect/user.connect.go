@@ -33,20 +33,17 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// UserServiceGetUserByIDProcedure is the fully-qualified name of the UserService's GetUserByID RPC.
-	UserServiceGetUserByIDProcedure = "/authentication.v1.UserService/GetUserByID"
-	// UserServiceGetSelfProcedure is the fully-qualified name of the UserService's GetSelf RPC.
-	UserServiceGetSelfProcedure = "/authentication.v1.UserService/GetSelf"
 	// UserServiceGetProfileByUsernameProcedure is the fully-qualified name of the UserService's
 	// GetProfileByUsername RPC.
 	UserServiceGetProfileByUsernameProcedure = "/authentication.v1.UserService/GetProfileByUsername"
+	// UserServiceGetSelfProcedure is the fully-qualified name of the UserService's GetSelf RPC.
+	UserServiceGetSelfProcedure = "/authentication.v1.UserService/GetSelf"
 )
 
 // UserServiceClient is a client for the authentication.v1.UserService service.
 type UserServiceClient interface {
-	GetUserByID(context.Context, *connect_go.Request[v1.GetUserByIDRequest]) (*connect_go.Response[v1.GetUserByIDResponse], error)
-	GetSelf(context.Context, *connect_go.Request[v1.GetSelfRequest]) (*connect_go.Response[v1.GetSelfResponse], error)
 	GetProfileByUsername(context.Context, *connect_go.Request[v1.GetProfileByUsernameRequest]) (*connect_go.Response[v1.GetProfileByUsernameResponse], error)
+	GetSelf(context.Context, *connect_go.Request[v1.GetSelfRequest]) (*connect_go.Response[v1.GetSelfResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the authentication.v1.UserService service. By
@@ -59,9 +56,9 @@ type UserServiceClient interface {
 func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) UserServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &userServiceClient{
-		getUserByID: connect_go.NewClient[v1.GetUserByIDRequest, v1.GetUserByIDResponse](
+		getProfileByUsername: connect_go.NewClient[v1.GetProfileByUsernameRequest, v1.GetProfileByUsernameResponse](
 			httpClient,
-			baseURL+UserServiceGetUserByIDProcedure,
+			baseURL+UserServiceGetProfileByUsernameProcedure,
 			opts...,
 		),
 		getSelf: connect_go.NewClient[v1.GetSelfRequest, v1.GetSelfResponse](
@@ -69,29 +66,13 @@ func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+UserServiceGetSelfProcedure,
 			opts...,
 		),
-		getProfileByUsername: connect_go.NewClient[v1.GetProfileByUsernameRequest, v1.GetProfileByUsernameResponse](
-			httpClient,
-			baseURL+UserServiceGetProfileByUsernameProcedure,
-			opts...,
-		),
 	}
 }
 
 // userServiceClient implements UserServiceClient.
 type userServiceClient struct {
-	getUserByID          *connect_go.Client[v1.GetUserByIDRequest, v1.GetUserByIDResponse]
-	getSelf              *connect_go.Client[v1.GetSelfRequest, v1.GetSelfResponse]
 	getProfileByUsername *connect_go.Client[v1.GetProfileByUsernameRequest, v1.GetProfileByUsernameResponse]
-}
-
-// GetUserByID calls authentication.v1.UserService.GetUserByID.
-func (c *userServiceClient) GetUserByID(ctx context.Context, req *connect_go.Request[v1.GetUserByIDRequest]) (*connect_go.Response[v1.GetUserByIDResponse], error) {
-	return c.getUserByID.CallUnary(ctx, req)
-}
-
-// GetSelf calls authentication.v1.UserService.GetSelf.
-func (c *userServiceClient) GetSelf(ctx context.Context, req *connect_go.Request[v1.GetSelfRequest]) (*connect_go.Response[v1.GetSelfResponse], error) {
-	return c.getSelf.CallUnary(ctx, req)
+	getSelf              *connect_go.Client[v1.GetSelfRequest, v1.GetSelfResponse]
 }
 
 // GetProfileByUsername calls authentication.v1.UserService.GetProfileByUsername.
@@ -99,11 +80,15 @@ func (c *userServiceClient) GetProfileByUsername(ctx context.Context, req *conne
 	return c.getProfileByUsername.CallUnary(ctx, req)
 }
 
+// GetSelf calls authentication.v1.UserService.GetSelf.
+func (c *userServiceClient) GetSelf(ctx context.Context, req *connect_go.Request[v1.GetSelfRequest]) (*connect_go.Response[v1.GetSelfResponse], error) {
+	return c.getSelf.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the authentication.v1.UserService service.
 type UserServiceHandler interface {
-	GetUserByID(context.Context, *connect_go.Request[v1.GetUserByIDRequest]) (*connect_go.Response[v1.GetUserByIDResponse], error)
-	GetSelf(context.Context, *connect_go.Request[v1.GetSelfRequest]) (*connect_go.Response[v1.GetSelfResponse], error)
 	GetProfileByUsername(context.Context, *connect_go.Request[v1.GetProfileByUsernameRequest]) (*connect_go.Response[v1.GetProfileByUsernameResponse], error)
+	GetSelf(context.Context, *connect_go.Request[v1.GetSelfRequest]) (*connect_go.Response[v1.GetSelfResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -113,19 +98,14 @@ type UserServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle(UserServiceGetUserByIDProcedure, connect_go.NewUnaryHandler(
-		UserServiceGetUserByIDProcedure,
-		svc.GetUserByID,
+	mux.Handle(UserServiceGetProfileByUsernameProcedure, connect_go.NewUnaryHandler(
+		UserServiceGetProfileByUsernameProcedure,
+		svc.GetProfileByUsername,
 		opts...,
 	))
 	mux.Handle(UserServiceGetSelfProcedure, connect_go.NewUnaryHandler(
 		UserServiceGetSelfProcedure,
 		svc.GetSelf,
-		opts...,
-	))
-	mux.Handle(UserServiceGetProfileByUsernameProcedure, connect_go.NewUnaryHandler(
-		UserServiceGetProfileByUsernameProcedure,
-		svc.GetProfileByUsername,
 		opts...,
 	))
 	return "/authentication.v1.UserService/", mux
@@ -134,14 +114,10 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOpt
 // UnimplementedUserServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedUserServiceHandler struct{}
 
-func (UnimplementedUserServiceHandler) GetUserByID(context.Context, *connect_go.Request[v1.GetUserByIDRequest]) (*connect_go.Response[v1.GetUserByIDResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("authentication.v1.UserService.GetUserByID is not implemented"))
+func (UnimplementedUserServiceHandler) GetProfileByUsername(context.Context, *connect_go.Request[v1.GetProfileByUsernameRequest]) (*connect_go.Response[v1.GetProfileByUsernameResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("authentication.v1.UserService.GetProfileByUsername is not implemented"))
 }
 
 func (UnimplementedUserServiceHandler) GetSelf(context.Context, *connect_go.Request[v1.GetSelfRequest]) (*connect_go.Response[v1.GetSelfResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("authentication.v1.UserService.GetSelf is not implemented"))
-}
-
-func (UnimplementedUserServiceHandler) GetProfileByUsername(context.Context, *connect_go.Request[v1.GetProfileByUsernameRequest]) (*connect_go.Response[v1.GetProfileByUsernameResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("authentication.v1.UserService.GetProfileByUsername is not implemented"))
 }
